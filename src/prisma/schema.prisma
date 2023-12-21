@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// Model untuk pengguna
+model User {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  phone      String
+  email      String       @unique
+  password   String 
+  sentMessages Message[] @relation("sentMessages")
+  receivedMessages Message[] @relation("receivedMessages")
+  readStatus ReadStatus[]
+}
+
+// Model untuk pesan chat
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  timestamp DateTime @default(now())
+  sender    User     @relation("sentMessages", fields: [senderId], references: [id])
+  receiver  User     @relation("receivedMessages", fields: [receiverId], references: [id])
+
+  senderId   String     @db.ObjectId
+  receiverId String    @db.ObjectId
+  readStatus ReadStatus[]
+}
+
+// Model untuk melacak pesan yang telah dibaca oleh pengguna
+model ReadStatus {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  messageId String    @db.ObjectId
+  userId    String     @db.ObjectId
+  read      Boolean @default(false)
+
+  message Message @relation(fields: [messageId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
